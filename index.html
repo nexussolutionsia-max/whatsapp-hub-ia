@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IA WhatsApp HUB</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0d14;--surface:#111420;--card:#181c2d;--hover:#1e2235;
+  --border:rgba(120,80,255,.18);--borderhi:rgba(120,80,255,.45);
+  --p:#7c4dff;--pdim:rgba(124,77,255,.15);
+  --c:#00d4ff;--cdim:rgba(0,212,255,.12);
+  --r:#ff4d6d;--rdim:rgba(255,77,109,.15);
+  --a:#ffb347;--adim:rgba(255,179,71,.15);
+  --t:#00e5b0;--tdim:rgba(0,229,176,.12);
+  --tx:#e8eaf6;--tx2:#8b90b8;--tx3:#4a4f72;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;font-size:14px}
+
+#hdr{height:60px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:9px;background:var(--pdim);border:1px solid var(--borderhi);border-radius:10px;padding:6px 13px}
+.logo-t{font-size:14px;font-weight:700;color:#fff}
+.logo-b{font-size:10px;background:var(--p);color:#fff;padding:1px 7px;border-radius:20px}
+.hdate{font-size:12px;color:var(--tx2)}
+.hr{display:flex;align-items:center;gap:14px}
+.bell{position:relative;cursor:pointer;font-size:18px;color:var(--tx2)}
+.bell:hover{color:#fff}
+.bn{position:absolute;top:-5px;right:-7px;background:var(--r);color:#fff;font-size:10px;font-weight:700;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--c));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;cursor:pointer}
+.hname{font-size:13px;font-weight:600;color:#fff}
+.hrole{font-size:11px;color:var(--tx2)}
+
+#lay{display:flex;flex:1;overflow:hidden}
+#sb{width:210px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.navs{padding:14px 10px 8px}
+.ni{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;border-radius:9px;cursor:pointer;transition:background .15s;margin-bottom:2px}
+.ni:hover{background:var(--hover)}
+.ni.on{background:var(--p)}
+.ni.on .nl{color:#fff;font-weight:600}
+.nil{display:flex;align-items:center;gap:9px}
+.nico{font-size:16px;opacity:.75}
+.nl{font-size:13px;color:var(--tx2);font-weight:500}
+.nbadge{font-size:10px;font-weight:700;background:var(--r);color:#fff;padding:2px 7px;border-radius:20px}
+.sbft{margin-top:auto;padding:12px 14px;border-top:1px solid var(--border)}
+.sfc{font-size:12px;font-weight:600;margin-bottom:3px}
+.sfn{font-size:11px;color:var(--tx3);font-family:'JetBrains Mono',monospace}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;animation:pulse 2s infinite}
+.dot.green{background:var(--t)}
+.dot.red{background:var(--r)}
+.dot.yellow{background:var(--a)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+#main{flex:1;overflow-y:auto;padding:22px 26px}
+.vw{display:none}
+.vw.on{display:block}
+.ptit{font-size:20px;font-weight:700;color:#fff;margin-bottom:3px}
+.psub{font-size:12px;color:var(--tx2);margin-bottom:20px}
+
+#ov{display:none;position:fixed;inset:0;background:rgba(11,13,20,.88);backdrop-filter:blur(3px);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+#ov.on{display:flex}
+.spin{width:40px;height:40px;border:3px solid var(--pdim);border-top:3px solid var(--p);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.spintxt{font-size:13px;color:var(--tx2)}
+
+#toasts{position:fixed;bottom:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:7px}
+.tk{padding:9px 16px;border-radius:9px;font-size:12px;font-weight:500;max-width:280px;animation:su .25s ease}
+@keyframes su{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.tk-ok{background:rgba(0,229,176,.12);border:1px solid rgba(0,229,176,.25);color:var(--t)}
+.tk-err{background:rgba(255,77,109,.12);border:1px solid rgba(255,77,109,.25);color:var(--r)}
+.tk-info{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:var(--c)}
+
+.sg{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:22px}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px 16px;position:relative;overflow:hidden;transition:border-color .2s,transform .15s}
+.sc:hover{border-color:var(--borderhi);transform:translateY(-2px)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sc.p::before{background:var(--p)}.sc.c::before{background:var(--c)}.sc.a::before{background:var(--a)}.sc.r::before{background:var(--r)}.sc.t::before{background:var(--t)}
+.si{font-size:20px;margin-bottom:7px;opacity:.8}
+.sl{font-size:11px;color:var(--tx2);margin-bottom:2px}
+.sv{font-size:26px;font-weight:700;color:#fff}
+
+.tc{display:grid;grid-template-columns:1fr 1.6fr;gap:16px;margin-bottom:16px}
+.cd{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.ctit{font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.ctit a{font-size:11px;color:var(--tx2);font-weight:400;margin-left:auto;cursor:pointer}
+.ctit a:hover{color:var(--c)}
+
+.gr{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:9px;border-left:3px solid var(--p);background:var(--hover);margin-bottom:6px;cursor:pointer;transition:background .15s}
+.gr:hover{background:var(--pdim)}
+.gav{width:33px;height:33px;border-radius:8px;background:var(--pdim);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.gin{flex:1;min-width:0}
+.gn{font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gl{font-size:11px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gbg{background:var(--r);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0}
+
+.aib{background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(124,77,255,.06));border:1px solid rgba(0,212,255,.18);border-radius:11px;padding:14px}
+.aitit{font-size:11px;font-weight:700;color:var(--c);margin-bottom:7px}
+.aisum{font-size:12px;color:var(--tx2);line-height:1.7}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.tp{background:var(--pdim);color:#b39dff;border:1px solid rgba(124,77,255,.3)}
+.tc2{background:var(--cdim);color:#5cf0ff;border:1px solid rgba(0,212,255,.3)}
+.tt{background:var(--tdim);color:#00e5b0;border:1px solid rgba(0,229,176,.3)}
+.tr{background:var(--rdim);color:#ff7090;border:1px solid rgba(255,77,109,.3)}
+.ta{background:var(--adim);color:#ffcc80;border:1px solid rgba(255,179,71,.3)}
+
+.mc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:8px;transition:border-color .15s}
+.mc:hover{border-color:var(--borderhi)}
+.mc.alta{border-left:4px solid var(--r);background:rgba(255,77,109,.03)}
+.mc.media{border-left:4px solid var(--a)}
+.mc.baixa{border-left:4px solid var(--t)}
+.mch{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.mcf{font-size:12px;font-weight:700;color:#fff}
+.mcg{font-size:11px;color:var(--tx2)}
+.mct{font-size:11px;color:var(--tx3)}
+.mcm{font-size:12px;color:var(--tx2);line-height:1.6;margin-bottom:8px}
+.mca{display:flex;gap:6px}
+.pb{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.pb.alta{background:var(--rdim);color:var(--r)}
+.pb.media{background:var(--adim);color:var(--a)}
+.pb.baixa{background:var(--tdim);color:var(--t)}
+
+.btn{font-size:12px;font-weight:600;padding:5px 13px;border-radius:7px;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-p{background:var(--p);color:#fff}.btn-p:hover{background:#6a3de8}
+.btn-g{background:var(--hover);color:var(--tx2);border:1px solid var(--border)}.btn-g:hover{color:#fff}
+.btn-c{background:var(--cdim);color:var(--c);border:1px solid rgba(0,212,255,.2)}.btn-c:hover{background:rgba(0,212,255,.18)}
+
+.pr{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:6px;transition:border-color .15s}
+.pr:hover{border-color:var(--borderhi)}
+.pr.done{opacity:.4}
+.pch{width:18px;height:18px;border-radius:5px;border:2px solid var(--borderhi);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.pch:hover{background:var(--pdim)}
+.pch.on{background:var(--p);border-color:var(--p);color:#fff;font-size:10px}
+.pt{flex:1;font-size:12px;color:#fff;font-weight:500}
+.pm{font-size:11px;color:var(--tx3);margin-top:1px}
+
+.fl{font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:5px;letter-spacing:.04em}
+.fi{width:100%;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 13px;font-size:12px;color:#fff;font-family:inherit;outline:none;transition:border-color .2s;margin-bottom:12px}
+.fi:focus{border-color:var(--p)}
+.fi.mono{font-family:'JetBrains Mono',monospace;font-size:11px}
+.bsync{width:100%;background:linear-gradient(135deg,var(--p),#5b2be0);color:#fff;font-size:13px;font-weight:700;padding:11px;border-radius:11px;border:none;cursor:pointer;font-family:inherit;transition:opacity .2s,transform .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.bsync:hover{opacity:.9;transform:translateY(-1px)}
+.ibox{background:var(--cdim);border:1px solid rgba(0,212,255,.18);border-radius:9px;padding:10px 14px;font-size:11px;color:var(--c);margin-top:11px}
+.warnbox{background:var(--adim);border:1px solid rgba(255,179,71,.25);border-radius:9px;padding:10px 14px;font-size:11px;color:var(--a);margin-top:11px}
+.kwbox{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.kwp{display:flex;align-items:center;gap:5px;background:var(--pdim);border:1px solid rgba(124,77,255,.3);color:#b39dff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;transition:border-color .15s}
+.kwp:hover{border-color:var(--r)}
+.kwr{cursor:pointer;color:rgba(179,157,255,.4);font-size:13px;line-height:1;transition:color .15s}
+.kwr:hover{color:var(--r)}
+.krow{display:flex;gap:8px;margin-top:10px}
+.kwin{flex:1;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:12px;color:#fff;font-family:inherit;outline:none;transition:border-color .2s}
+.kwin:focus{border-color:var(--p)}
+.kadd{background:var(--p);color:#fff;font-size:20px;width:38px;border-radius:9px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0}
+.kadd:hover{background:#6a3de8}
+
+.msgc{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin-bottom:7px;transition:border-color .15s}
+.msgc:hover{border-color:var(--borderhi)}
+.msgh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.msgf{font-size:12px;font-weight:700;color:#fff}
+.msgg{font-size:11px;color:var(--tx2)}
+.msgt{font-size:11px;color:var(--tx3)}
+.msgb{font-size:12px;color:var(--tx2);line-height:1.6}
+.kwtag{display:inline-block;background:var(--pdim);color:#b39dff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:5px}
+.empty{text-align:center;padding:30px;color:var(--tx3);font-size:13px}
+
+.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.gcard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px;cursor:pointer;transition:border-color .2s,transform .15s}
+.gcard:hover{border-color:var(--borderhi);transform:translateY(-2px)}
+.gcav{width:42px;height:42px;background:var(--pdim);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+
+#stbar{background:var(--pdim);border-top:1px solid var(--border);padding:6px 24px;font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:11px;flex-shrink:0}
+.dot2{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--t);animation:pulse 2s infinite}
+#sytime{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px}
+@media(max-width:1100px){.sg{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.tc{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="ov"><div class="spin"></div><div class="spintxt" id="spintxt">Conectando...</div></div>
+<div id="toasts"></div>
+
+<div id="hdr">
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="logo"><span class="logo-t">💬 IA WhatsApp HUB</span><span class="logo-b">Beta</span></div>
+    <span class="hdate" id="hdate"></span>
+  </div>
+  <div class="hr">
+    <div class="bell">🔔<div class="bn" id="bn">0</div></div>
+    <div><div class="hname">Marcos Sousa</div><div class="hrole">Administrador</div></div>
+    <div class="av">MR</div>
+  </div>
+</div>
+
+<div id="lay">
+<div id="sb">
+  <div class="navs">
+    <div class="ni on" onclick="nav('visao',this)"><div class="nil"><span class="nico">📊</span><span class="nl">Visão Geral</span></div></div>
+    <div class="ni" onclick="nav('grupos',this)"><div class="nil"><span class="nico">👥</span><span class="nl">Grupos</span></div><span class="nbadge" id="nb-g">—</span></div>
+    <div class="ni" onclick="nav('mensagens',this)"><div class="nil"><span class="nico">💬</span><span class="nl">Mensagens</span></div></div>
+    <div class="ni" onclick="nav('mencoes',this)"><div class="nil"><span class="nico">🔔</span><span class="nl">Menções</span></div><span class="nbadge" id="nb-m">—</span></div>
+    <div class="ni" onclick="nav('pendencias',this)"><div class="nil"><span class="nico">⚠️</span><span class="nl">Pendências</span></div><span class="nbadge" id="nb-p">—</span></div>
+    <div class="ni" onclick="nav('prioridades',this)"><div class="nil"><span class="nico">🎯</span><span class="nl">Prioridades</span></div></div>
+    <div class="ni" onclick="nav('config',this)"><div class="nil"><span class="nico">⚙️</span><span class="nl">Config</span></div></div>
+  </div>
+  <div class="sbft">
+    <div class="sfc" id="conn-s" style="color:var(--a)"><span class="dot yellow"></span>Conectando...</div>
+    <div class="sfn" id="conn-num">+55 11 99407-1141</div>
+    <div class="sfn" style="margin-top:7px;color:var(--tx2)">UazAPI Proxy</div>
+    <div class="sfn" id="conn-url">localhost:3131</div>
+  </div>
+</div>
+
+<div id="main">
+
+  <!-- VISÃO GERAL -->
+  <div id="vw-visao" class="vw on">
+    <div class="ptit">📊 Visão Geral</div>
+    <div class="psub" id="psub">Conectando ao servidor local...</div>
+    <div class="sg">
+      <div class="sc p"><div class="si">💬</div><div class="sl">Mensagens</div><div class="sv" id="s-msg">—</div></div>
+      <div class="sc c"><div class="si">👤</div><div class="sl">Menções</div><div class="sv" id="s-men">—</div></div>
+      <div class="sc a"><div class="si">⚠️</div><div class="sl">Pendências</div><div class="sv" id="s-pend">—</div></div>
+      <div class="sc r"><div class="si">👥</div><div class="sl">Grupos</div><div class="sv" id="s-grp">—</div></div>
+      <div class="sc t"><div class="si">🎯</div><div class="sl">Palavras-Chave</div><div class="sv" id="s-kw">—</div></div>
+    </div>
+    <div class="tc">
+      <div class="cd">
+        <div class="ctit">👥 Grupos Ativos <a onclick="nav('grupos',document.querySelectorAll('.ni')[1])">Ver todos →</a></div>
+        <div id="g-list"><div class="empty">Aguardando...</div></div>
+      </div>
+      <div class="cd">
+        <div class="ctit">🤖 Análise IA</div>
+        <div class="aib">
+          <div class="aitit">✦ Resumo Inteligente do Dia</div>
+          <div class="aisum" id="ai-sum">Aguardando dados da API...</div>
+          <div class="tags" id="ai-tags"></div>
+        </div>
+        <button class="btn btn-c" onclick="rodarIA()" id="btn-ia" style="margin-top:9px;width:100%;padding:8px">🤖 Analisar com IA Agora</button>
+        <div id="ai-res" style="display:none;margin-top:10px;font-size:12px;color:var(--tx2);line-height:1.7;background:var(--hover);padding:12px;border-radius:9px;border:1px solid var(--border)"></div>
+      </div>
+    </div>
+    <div class="cd">
+      <div class="ctit">🔔 Menções Recentes <a onclick="nav('mencoes',document.querySelectorAll('.ni')[3])">Ver todas →</a></div>
+      <div id="men-prev"><div class="empty">Aguardando...</div></div>
+    </div>
+  </div>
+
+  <!-- GRUPOS -->
+  <div id="vw-grupos" class="vw">
+    <div class="ptit">👥 Grupos</div>
+    <div class="psub">Todos os seus grupos reais do WhatsApp</div>
+    <div class="ggrid" id="g-grid"><div class="empty" style="grid-column:1/-1">Carregando...</div></div>
+  </div>
+
+  <!-- MENSAGENS -->
+  <div id="vw-mensagens" class="vw">
+    <div class="ptit">💬 Mensagens Monitoradas</div>
+    <div class="psub">Mensagens com suas palavras-chave</div>
+    <div id="msg-list"><div class="empty">Carregando...</div></div>
+  </div>
+
+  <!-- MENÇÕES -->
+  <div id="vw-mencoes" class="vw">
+    <div class="ptit">🔔 Menções a Você</div>
+    <div class="psub">Toda vez que mencionaram "Marcos Sousa" ou seu número</div>
+    <div id="men-list"><div class="empty">Aguardando...</div></div>
+  </div>
+
+  <!-- PENDÊNCIAS -->
+  <div id="vw-pendencias" class="vw">
+    <div class="ptit">⚠️ Pendências</div>
+    <div class="psub">Itens que precisam de ação</div>
+    <div id="p-list"></div>
+    <button class="btn btn-p" style="margin-top:10px" onclick="addPend()">+ Nova Pendência</button>
+  </div>
+
+  <!-- PRIORIDADES -->
+  <div id="vw-prioridades" class="vw">
+    <div class="ptit">🎯 Prioridades</div>
+    <div class="psub">O que precisa da sua atenção agora</div>
+    <div style="margin-bottom:14px">
+      <div class="ctit" style="margin-bottom:8px">🔴 Alta Prioridade</div>
+      <div id="pr-alta"><div class="empty">Nenhum item urgente</div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="ctit" style="margin-bottom:8px">🟡 Média Prioridade</div>
+      <div id="pr-media"><div class="empty">Nenhum item</div></div>
+    </div>
+    <div>
+      <div class="ctit" style="margin-bottom:8px">🟢 Baixa Prioridade</div>
+      <div id="pr-baixa"><div class="empty">Sem itens</div></div>
+    </div>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="vw-config" class="vw">
+    <div class="ptit">⚙️ Configuração</div>
+    <div class="psub">Servidor proxy local e palavras-chave</div>
+    <div style="max-width:580px">
+      <div class="cd" style="margin-bottom:16px">
+        <div class="ctit">🔗 Conexão (via servidor local)</div>
+        <div class="fl">URL DO SERVIDOR LOCAL (proxy)</div>
+        <input class="fi mono" id="cfg-proxy" type="text" value="http://localhost:3131">
+        <div class="fl">TOKEN UAZAPI</div>
+        <input class="fi mono" id="cfg-token" type="password" value="py6tuBfTPmkAf01Ce8AiI2hNn13G7VnTngsiu3l5sigiK74ZB8">
+        <div class="fl">SEU NÚMERO</div>
+        <input class="fi mono" id="cfg-phone" type="text" value="11994071141">
+        <div class="fl">SEU NOME</div>
+        <input class="fi" id="cfg-name" type="text" value="Marcos Sousa">
+        <button class="bsync" id="sync-btn" onclick="sincronizar()">
+          <span id="sync-ico">🔄</span>
+          <span id="sync-lbl">Sincronizar Agora</span>
+        </button>
+        <div class="ibox">
+          💡 O sistema usa um servidor proxy local (Node.js) para se comunicar com a UazAPI sem bloqueio de CORS. Ele já deve estar rodando na porta 3131.
+        </div>
+      </div>
+      <div class="cd">
+        <div class="ctit">🎯 Palavras-Chave Monitoradas</div>
+        <div class="kwbox" id="kwbox"></div>
+        <div class="krow">
+          <input class="kwin" id="kw-in" placeholder="Nova palavra-chave..." onkeypress="if(event.key==='Enter')addKW()">
+          <button class="kadd" onclick="addKW()">+</button>
+        </div>
+        <div class="ibox" style="margin-top:10px">📌 A IA detecta essas palavras em todas as mensagens dos grupos automaticamente.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div id="stbar">
+  <div class="dot2"></div>
+  <span>Monitoramento ativo</span>
+  <span>•</span>
+  <span id="st-g">— grupos</span>
+  <span>•</span>
+  <span id="st-k">— palavras-chave</span>
+  <span id="sytime">aguardando sync</span>
+</div>
+
+<script>
+const S={
+  proxy:'http://localhost:3131',
+  token:'py6tuBfTPmkAf01Ce8AiI2hNn13G7VnTngsiu3l5sigiK74ZB8',
+  phone:'11994071141',
+  name:'Marcos Sousa',
+  grupos:[],mensagens:[],mencoes:[],
+  pendencias:[
+    {id:1,t:'Ajustar disparo — RQ Marketing',p:'alta',c:'Criado há 1h',done:false},
+    {id:2,t:'Revisar follow-up — Sky Capital',p:'media',c:'Criado há 2h',done:false},
+    {id:3,t:'Validar CRM — Operacional RQ',p:'media',c:'Criado há 3h',done:false},
+  ],
+  keywords:['IA','atendimento','urgente','follow-up','Marcos Sousa','ia','i.a','I.A','crm','lead'],
+};
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function toast(msg,type='info'){
+  const d=document.createElement('div');d.className='tk tk-'+type;d.textContent=msg;
+  document.getElementById('toasts').appendChild(d);setTimeout(()=>d.remove(),4500);
+}
+function ov(on,txt){
+  document.getElementById('ov').classList.toggle('on',on);
+  if(txt)document.getElementById('spintxt').textContent=txt;
+}
+function nav(id,el){
+  document.querySelectorAll('.vw').forEach(v=>v.classList.remove('on'));
+  document.getElementById('vw-'+id).classList.add('on');
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  if(el)el.classList.add('on');
+}
+
+async function api(path,method='GET',body=null){
+  const url='/api/proxy?path='+encodeURIComponent(path);
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(url,opts);
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return r.json();
+}
+
+function checkKW(text){
+  if(!text)return null;
+  const low=text.toLowerCase();
+  return S.keywords.find(k=>low.includes(k.toLowerCase()))||null;
+}
+function fmtTime(t){
+  if(!t)return '';
+  return new Date(t*1000).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderKW(){
+  document.getElementById('kwbox').innerHTML=S.keywords.map(kw=>
+    `<div class="kwp">${esc(kw)}<span class="kwr" onclick="removeKW('${esc(kw)}')">✕</span></div>`
+  ).join('');
+  document.getElementById('s-kw').textContent=S.keywords.length;
+  document.getElementById('st-k').textContent=S.keywords.length+' palavras-chave';
+}
+function addKW(){
+  const v=document.getElementById('kw-in').value.trim();
+  if(v&&!S.keywords.includes(v)){S.keywords.push(v);renderKW();toast('Adicionado: '+v,'ok');}
+  document.getElementById('kw-in').value='';
+}
+function removeKW(kw){S.keywords=S.keywords.filter(k=>k!==kw);renderKW();}
+
+const EMOJIS=['🎯','⚙️','💰','🎨','🆘','📊','🚀','💡','📱','🏆','🌟','🔥','⭐','🎪','🎭'];
+
+function renderGrupos(){
+  document.getElementById('nb-g').textContent=S.grupos.length;
+  document.getElementById('s-grp').textContent=S.grupos.length;
+  document.getElementById('st-g').textContent=S.grupos.length+' grupos';
+
+  document.getElementById('g-list').innerHTML=S.grupos.slice(0,6).map((g,i)=>`
+    <div class="gr">
+      <div class="gav">${EMOJIS[i%EMOJIS.length]}</div>
+      <div class="gin">
+        <div class="gn">${esc(g.name||g.subject||'Grupo '+(i+1))}</div>
+        <div class="gl">${g.description||g.desc||''}</div>
+      </div>
+      ${(g.unread||g.unreadCount)>0?`<div class="gbg">${g.unread||g.unreadCount}</div>`:''}
+    </div>`).join('')||'<div class="empty">Nenhum grupo encontrado</div>';
+
+  document.getElementById('g-grid').innerHTML=S.grupos.map((g,i)=>`
+    <div class="gcard">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="gcav">${EMOJIS[i%EMOJIS.length]}</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#fff">${esc(g.name||g.subject||'Grupo '+(i+1))}</div>
+            <div style="font-size:11px;color:var(--tx2)">${g.participantsCount||g.size||0} participantes</div>
+          </div>
+        </div>
+        ${(g.unread||g.unreadCount)>0?`<div class="gbg">${g.unread||g.unreadCount}</div>`:''}
+      </div>
+      <button class="btn btn-p" style="width:100%;padding:6px;border-radius:8px;font-size:12px" onclick="toast('Grupo: ${esc(g.id||g.groupJid||'')}','info')">Ver ID</button>
+    </div>`).join('')||'<div class="empty" style="grid-column:1/-1">Nenhum grupo encontrado</div>';
+}
+
+function renderMensagens(){
+  document.getElementById('s-msg').textContent=S.mensagens.length;
+  const kw=S.mensagens.filter(m=>checkKW(m.body));
+  document.getElementById('msg-list').innerHTML=kw.length
+    ?kw.map(m=>`
+      <div class="msgc">
+        <div class="msgh">
+          <div><div class="msgf">${esc(m.from||m.pushName||'Desconhecido')}</div><div class="msgg">${esc(m.chatId||m.remoteJid||'')}</div></div>
+          <div class="msgt">${fmtTime(m.timestamp||m.messageTimestamp)}</div>
+        </div>
+        <div class="msgb">${esc(m.body||m.text||'')}</div>
+        ${checkKW(m.body||m.text)?`<span class="kwtag">🎯 ${esc(checkKW(m.body||m.text))}</span>`:''}
+      </div>`).join('')
+    :'<div class="empty">Nenhuma mensagem com palavras-chave detectadas</div>';
+}
+
+function renderMencoes(){
+  const PHONE=S.phone.replace(/\D/g,'');
+  const NAME=S.name.toLowerCase();
+  S.mencoes=S.mensagens.filter(m=>{
+    const body=(m.body||m.text||'').toLowerCase();
+    return body.includes(NAME)||body.includes(PHONE)||(m.mentionedJids||[]).some(j=>j.includes(PHONE));
+  });
+  document.getElementById('nb-m').textContent=S.mencoes.length;
+  document.getElementById('s-men').textContent=S.mencoes.length;
+  document.getElementById('bn').textContent=S.mencoes.length;
+
+  const mkCard=m=>{
+    const isUrg=(m.body||m.text||'').toLowerCase().includes('urgente');
+    const pr=isUrg?'alta':'media';
+    return `<div class="mc ${pr}">
+      <div class="mch">
+        <div><div class="mcf">${esc(m.from||m.pushName||'?')}</div><div class="mcg">${esc(m.chatId||m.remoteJid||'')}</div></div>
+        <div style="display:flex;align-items:center;gap:7px">
+          <span class="pb ${pr}">${pr}</span>
+          <span class="mct">${fmtTime(m.timestamp||m.messageTimestamp)}</span>
+        </div>
+      </div>
+      <div class="mcm">${esc(m.body||m.text||'')}</div>
+      <div class="mca">
+        <button class="btn btn-p" onclick="toast('Respondendo...','info')">Responder</button>
+        <button class="btn btn-g" onclick="this.closest('.mc').style.opacity='.35'">Marcar lida</button>
+      </div>
+    </div>`;
+  };
+
+  document.getElementById('men-prev').innerHTML=S.mencoes.slice(0,3).map(mkCard).join('')||'<div class="empty">Nenhuma menção encontrada</div>';
+  document.getElementById('men-list').innerHTML=S.mencoes.map(mkCard).join('')||'<div class="empty">Nenhuma menção encontrada</div>';
+
+  const alta=S.mencoes.filter(m=>(m.body||'').toLowerCase().includes('urgente'));
+  const media=S.mencoes.filter(m=>!(m.body||'').toLowerCase().includes('urgente'));
+  document.getElementById('pr-alta').innerHTML=alta.map(mkCard).join('')||'<div class="empty">Nenhum item urgente 🎉</div>';
+  document.getElementById('pr-media').innerHTML=media.slice(0,5).map(mkCard).join('')||'<div class="empty">Nenhum item</div>';
+}
+
+function renderPendencias(){
+  const open=S.pendencias.filter(p=>!p.done).length;
+  document.getElementById('nb-p').textContent=open;
+  document.getElementById('s-pend').textContent=open;
+  document.getElementById('p-list').innerHTML=S.pendencias.map(p=>`
+    <div class="pr${p.done?' done':''}">
+      <div class="pch${p.done?' on':''}" onclick="toggleP(${p.id})">${p.done?'✓':''}</div>
+      <div>
+        <div class="pt" style="${p.done?'text-decoration:line-through':''}">${esc(p.t)}</div>
+        <div class="pm">${esc(p.c)}</div>
+      </div>
+      <span class="pb ${p.p}">${p.p}</span>
+    </div>`).join('');
+}
+function toggleP(id){
+  const p=S.pendencias.find(x=>x.id===id);
+  if(p){p.done=!p.done;renderPendencias();}
+}
+function addPend(){
+  const t=prompt('Descrição da pendência:');if(!t)return;
+  const p=prompt('Prioridade (alta/media/baixa):','media')||'media';
+  S.pendencias.unshift({id:Date.now(),t,p:['alta','media','baixa'].includes(p)?p:'media',c:'Criado agora',done:false});
+  renderPendencias();toast('Pendência adicionada!','ok');
+}
+
+function updateAISum(){
+  const counts={};
+  S.keywords.forEach(kw=>{
+    const n=S.mensagens.filter(m=>(m.body||m.text||'').toLowerCase().includes(kw.toLowerCase())).length;
+    if(n>0)counts[kw]=n;
+  });
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const colors=['tp','tc2','tt','tr','ta'];
+  document.getElementById('ai-tags').innerHTML=sorted.map(([kw,n],i)=>
+    `<span class="tag ${colors[i%5]}">${esc(kw)} (${n}x)</span>`
+  ).join('');
+  const urgCnt=S.mensagens.filter(m=>(m.body||'').toLowerCase().includes('urgente')).length;
+  document.getElementById('ai-sum').innerHTML=S.mensagens.length===0
+    ?'Aguardando mensagens da API...'
+    :`Você recebeu <strong>${S.mensagens.length} mensagens</strong> de <strong>${S.grupos.length} grupos</strong>.${S.mencoes.length>0?' <strong>'+S.mencoes.length+' menções</strong> a você.':''}${urgCnt>0?' <strong style="color:var(--r)">'+urgCnt+' urgente(s)</strong>.':''}`;
+}
+
+async function rodarIA(){
+  const btn=document.getElementById('btn-ia');
+  const res=document.getElementById('ai-res');
+  btn.disabled=true;btn.textContent='⏳ Analisando...';
+  res.style.display='block';res.innerHTML='<em style="color:var(--tx3)">Consultando Claude...</em>';
+  const kwStats=S.keywords.map(kw=>{
+    const n=S.mensagens.filter(m=>(m.body||'').toLowerCase().includes(kw.toLowerCase())).length;
+    return n>0?kw+': '+n+'x':null;
+  }).filter(Boolean).join(', ');
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,
+        messages:[{role:'user',content:`Analise este cenário de WhatsApp de Marcos Sousa e dê 3 recomendações práticas. Responda em texto simples sem markdown, máx 4 parágrafos:
+
+Grupos ativos: ${S.grupos.length}
+Total mensagens analisadas: ${S.mensagens.length}
+Menções diretas ao Marcos: ${S.mencoes.length}
+Palavras-chave detectadas: ${kwStats||'nenhuma ainda'}
+
+Amostra de mensagens recentes:
+${S.mensagens.slice(0,15).map(m=>`- ${m.from||m.pushName||'?'}: ${m.body||m.text||''}`).join('\n')}
+
+Seja direto, prático e aponte o que é mais urgente.`}]})
+    });
+    const d=await r.json();
+    res.innerHTML=(d.content?.[0]?.text||'Análise concluída.').replace(/\n/g,'<br>');
+  }catch(e){
+    res.innerHTML='Análise local: '+S.mensagens.length+' msgs, '+S.mencoes.length+' menções. Responda menções urgentes primeiro, depois verifique grupos com mais atividade.';
+  }
+  btn.disabled=false;btn.textContent='🤖 Analisar Novamente';
+}
+
+async function sincronizar(){
+  S.proxy=document.getElementById('cfg-proxy')?.value?.trim()||S.proxy;
+  S.token=document.getElementById('cfg-token')?.value?.trim()||S.token;
+  S.phone=document.getElementById('cfg-phone')?.value?.trim()||S.phone;
+  S.name=document.getElementById('cfg-name')?.value?.trim()||S.name;
+
+  const btn=document.getElementById('sync-btn');
+  if(btn){btn.disabled=true;document.getElementById('sync-ico').textContent='⏳';document.getElementById('sync-lbl').textContent='Sincronizando...';}
+  ov(true,'Conectando ao servidor local...');
+
+  let ok=0,erros=[];
+
+  try{
+    ov(true,'Verificando status WhatsApp...');
+    const st=await api('/instance/status');
+    const on=st?.status?.connected&&st?.status?.loggedIn;
+    const dot=`<span class="dot ${on?'green':'red'}"></span>`;
+    document.getElementById('conn-s').innerHTML=dot+(on?'WhatsApp Conectado':'Desconectado');
+    document.getElementById('conn-s').style.color=on?'var(--t)':'var(--r)';
+    toast(on?'✅ WhatsApp conectado!':'⚠️ WhatsApp desconectado',on?'ok':'err');
+    ok++;
+  }catch(e){erros.push('Status: '+e.message);}
+
+  try{
+    ov(true,'Carregando grupos reais...');
+    const gd=await api('/group/list');
+    S.grupos=(gd?.groups||gd?.data||[]).map(g=>({...g,
+      unread:g.unreadCount||g.unread||0,
+      participantsCount:Array.isArray(g.participants)?g.participants.length:(g.size||0)
+    }));
+    toast('✅ '+S.grupos.length+' grupos carregados','ok');ok++;
+  }catch(e){erros.push('Grupos: '+e.message);}
+
+  try{
+    ov(true,'Buscando mensagens recentes...');
+    const md=await api('/message/find','POST',{limit:200,offset:0});
+    S.mensagens=md?.messages||md?.data||[];
+    toast('✅ '+S.mensagens.length+' mensagens carregadas','ok');ok++;
+  }catch(e){
+    try{
+      const cd=await api('/chat/find','POST',{limit:100});
+      S.mensagens=cd?.chats||cd?.data||[];
+      toast('✅ Chats carregados (alternativa)','ok');ok++;
+    }catch(e2){erros.push('Mensagens: '+e.message);}
+  }
+
+  renderGrupos();renderMensagens();renderMencoes();renderPendencias();updateAISum();
+
+  const now=new Date().toLocaleTimeString('pt-BR');
+  document.getElementById('sytime').textContent='Sync: '+now;
+  document.getElementById('psub').textContent=`Última sincronização: ${now} • ${S.grupos.length} grupos • ${S.mensagens.length} mensagens`;
+
+  erros.forEach(e=>toast(e,'err'));
+
+  if(btn){
+    document.getElementById('sync-ico').textContent=erros.length?'⚠️':'✅';
+    document.getElementById('sync-lbl').textContent=erros.length?'Concluído ('+erros.length+' erros)':'Tudo sincronizado!';
+    setTimeout(()=>{
+      document.getElementById('sync-ico').textContent='🔄';
+      document.getElementById('sync-lbl').textContent='Sincronizar Agora';
+      btn.disabled=false;
+    },3000);
+  }
+  ov(false);
+}
+
+document.getElementById('hdate').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+renderKW();renderPendencias();
+sincronizar();
+setInterval(sincronizar,60000);
+</script>
+</body>
+</html>
